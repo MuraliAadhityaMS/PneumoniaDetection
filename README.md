@@ -24,3 +24,11 @@ CS725 Project - ML methods to classify Xray images for pneumonia
 <https://data.mendeley.com/datasets/rscbjbr9sj/2>
 
 - ChestXRay2017.zip file was used 
+
+***
+
+👩‍💻 Packages required
+
+- tensorflow - 2.9.1
+- numpy - 1.21.4
+- matplotlib - 3.5.3
