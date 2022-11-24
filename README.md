@@ -32,3 +32,10 @@ CS725 Project - ML methods to classify Xray images for pneumonia
 - tensorflow - 2.9.1
 - numpy - 1.21.4
 - matplotlib - 3.5.3
+
+***
+
+📓 The hyperparemter tuning results are included as PDF for both the methods explored
+
+
+***
