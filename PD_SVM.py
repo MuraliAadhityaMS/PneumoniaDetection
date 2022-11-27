@@ -10,10 +10,10 @@ import time
 
 #%% ------LOAD DATASETS----------------------
 
-BATCH_SIZE   =   500
+BATCH_SIZE   =   2944
 IMAGE_SIZE   =   256
-CHANNELS     =   1 # grayscale 
-FOLDER       =   './Data/for_test/500'
+CHANNELS     =   1 # grayscale # 3    # RGB
+FOLDER       =   './Data/for_training'
 
 dataset = tf.keras.preprocessing.image_dataset_from_directory(
     FOLDER,
@@ -25,9 +25,6 @@ dataset = tf.keras.preprocessing.image_dataset_from_directory(
 )
 
 class_names = dataset.class_names
-
-# Seed shuffles the image datasets within gaussian distribution
-# We are shuffling here to plot datasets in the next cell so that all cases can be seen
 
 #%%------VISUZLIZE DATASET----------------------
 
@@ -52,8 +49,9 @@ def get_dataset_partitions_tf(dataset, train_split=0.8):
         
     for image_batch, labels_batch in dataset:
         ndata    =  image_batch.shape[0]
-        images   =  image_batch.numpy()/255     # Rescaling
-        labels   =  labels_batch.numpy()        # Flattening
+        images   =  image_batch.numpy()/255  # Rescaling
+        labels   =  labels_batch.numpy()
+        # Flattening
         dataset  =  [images.reshape(ndata, -1), labels]
         
     ds_size = dataset[0].shape[0]
@@ -139,6 +137,15 @@ if model.fit_status_ == 0:
     print('SVM MODEL HAS CONVERGED')
 else :
     print('SVM MODEL HAS NOT CONVERGED')
+    
+#%% Save model
+import pickle
+filename = 'models/SVM.sav'
+pickle.dump(model, open(filename, 'wb'))
+ 
+#%% LOAD MODEL
+ 
+loaded_model = pickle.load(open(filename, 'rb'))
 
 #%%------PREDICT FROM MODEL----------------------
 from sklearn.metrics import accuracy_score
@@ -189,8 +196,8 @@ m_size   =  min(figsize)*16
 lw       =  min(figsize)*2
 plt.figure(figsize = figsize, dpi=200)
 
-feature = [2046, 2302]      # Between top 2 weights
-# feature = [2046, 1640]    # Between highest and lowest
+feature = [2046, 2302]
+# feature = [2046, 1640]
 
 # color   =  model.predict(list_dataset[0])
 color   =  list_dataset[1]
@@ -241,3 +248,29 @@ plt.legend(handles = legend_elements,
             labels = [class_names[0], class_names[1]],#, 'Fit'], 
             loc="upper left", fontsize=fontsize*0.7)
 plt.show()
+
+
+#%% -------FIND CONFUSION MATRIX------------
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
+
+test_pred   = model.predict(list_dataset[0])
+test_labels = list_dataset[1]
+    
+#%% -------PLOT CONFUSION MATRIX------------
+
+figsize = (5, 5)
+fontsize  =  min(figsize)*2
+plt.figure(figsize=figsize, dpi=200)
+    
+cm    =  confusion_matrix(test_pred, test_labels)
+disp  =  ConfusionMatrixDisplay(confusion_matrix=cm, display_labels = class_names)
+fig, ax = plt.subplots(figsize=figsize)
+disp.plot(ax=ax, colorbar = False)
+plt.ylabel('True Labels', fontsize=fontsize*1.3)
+plt.xlabel('Prredicted Labels', fontsize=fontsize*1.3)
+plt.xticks(fontsize=fontsize)
+plt.yticks(fontsize=fontsize)
+
+cbar = fig.colorbar(mappable = disp.im_, 
+                    ticks = np.linspace(np.min(cm), np.max(cm), 2))
+cbar.ax.tick_params(labelsize = fontsize*1.2)

@@ -26,11 +26,6 @@ dataset = tf.keras.preprocessing.image_dataset_from_directory(
 
 class_names =  dataset.class_names
 
-dataset  =  dataset.take(10)
-
-# Seed shuffles the image datasets within gaussian distribution
-# We are shuffling here to plot datasets in the next cell so that all cases can be seen
-
 #%%------VISUZLIZE DATASET----------------------
 for image_batch, labels_batch in dataset.take(1):
     print(image_batch.shape)
@@ -46,7 +41,8 @@ for image_batch, labels_batch in dataset.take(12):
         
 #%%------SPLIT, SHUFFLE AND RESCALE DATASETS----------------------
 
-def get_dataset_partitions_tf(dataset, train_split=0.8, val_split=0.1, test_split=0.1, shuffle=True, shuffle_size=10):
+def get_dataset_partitions_tf(dataset, train_split=0.8, val_split=0.1, 
+                              test_split=0.1, shuffle=True, shuffle_size=10):
     assert (train_split + test_split + val_split) == 1
     
     ds_size = len(dataset)
@@ -183,8 +179,20 @@ plt.tight_layout()
 #%% Save model
 model.save("models/CNN_EPOCHS_%s.h5" %EPOCHS)
 
+import pickle
+filename  =  'models/CNN_fitting_history_EPOCHS_%s.txt' %EPOCHS
+file = open(filename, 'wb')
+pickle.dump(fitting.history, file)
+file.close()
+
 #%% Load Model
 model = tf.keras.models.load_model('models/CNN_EPOCHS_50.h5')
+
+import pickle
+filename  =  'models/CNN_fitting_history_EPOCHS_%s.txt' %EPOCHS
+file = open(filename, 'wb')
+pickle.load(file)
+file.close()
 
 #%% Plotting Loss and Accuracy
 
@@ -227,3 +235,36 @@ plt.tight_layout()
 plt.show()
 
 print('Model Score : %5.2f ' %(model.evaluate(test)[1]*100) + '%')
+
+#%% -------FIND CONFUSION MATRIX------------
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
+
+test_pred   = np.array([0])
+test_labels = np.array([0])
+
+for images, labels in dataset:
+    test_pred = np.append(test_pred, np.argmax(model.predict(images.numpy()),
+                                               axis=1))
+    test_labels = np.append(test_labels, labels.numpy())
+    
+test_pred    =  test_pred[1:]
+test_labels  =  test_labels[1:]
+    
+#%% -------PLOT CONFUSION MATRIX------------
+
+figsize = (5, 5)
+fontsize  =  min(figsize)*2
+plt.figure(figsize=figsize, dpi=200)
+    
+cm    =  confusion_matrix(test_pred, test_labels)
+disp  =  ConfusionMatrixDisplay(confusion_matrix=cm, display_labels = class_names)
+fig, ax = plt.subplots(figsize=figsize)
+disp.plot(ax=ax, colorbar = False)
+plt.ylabel('True Labels', fontsize=fontsize*1.3)
+plt.xlabel('Prredicted Labels', fontsize=fontsize*1.3)
+plt.xticks(fontsize=fontsize)
+plt.yticks(fontsize=fontsize)
+
+cbar = fig.colorbar(mappable = disp.im_, 
+                    ticks = np.linspace(np.min(cm), np.max(cm), 2))
+cbar.ax.tick_params(labelsize = fontsize*1.2)
